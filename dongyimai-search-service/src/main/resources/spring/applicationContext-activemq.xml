@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+
+    <!--配置activemq的连接工厂-->
+    <bean id="targetConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="brokerURL" value="tcp://192.168.188.128:61616"/>
+    </bean>
+
+    <!--配置spring管理的连接工厂-->
+    <bean id="connectionFactory" class="org.springframework.jms.connection.SingleConnectionFactory">
+        <property name="targetConnectionFactory" ref="targetConnectionFactory"/>
+    </bean>
+
+    <context:component-scan base-package="com.offcn.search.service.impl"/>
+
+    <!--配置springjms的jms模板-->
+    <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory" ref="connectionFactory" />
+    </bean>
+
+
+
+    <!--配置队列 导入solr-->
+    <bean id="queueSolrDestination" class="org.apache.activemq.command.ActiveMQQueue">
+        <constructor-arg value="dongyimai_queue_solr"/>
+    </bean>
+
+    <!--自己实现的监听器-->
+    <bean id="itemSearchListener" class="com.offcn.search.service.impl.ItemSearchListener"></bean>
+
+
+    <!--Spring消费者监听容器 导入solr库-->
+    <bean class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+        <property name="connectionFactory" ref="connectionFactory"/>
+        <property name="destination" ref="queueSolrDestination" />
+        <!--配置自己实现的监听器-->
+
+        <property name="messageListener" ref="itemSearchListener"/>
+    </bean>
+
+    <!--监听移除solr-->
+
+
+
+    <!--配置队列-->
+    <bean id="queueSolrDeleteDestination" class="org.apache.activemq.command.ActiveMQQueue">
+        <constructor-arg value="dongyimai_queue_solr_delete"/>
+    </bean>
+
+    <!--自己实现的监听器-->
+    <bean id="itemDeleteListener" class="com.offcn.search.service.impl.ItemDeleteListener"></bean>
+
+
+    <!--Spring消费者监听容器 导入solr库-->
+    <bean class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+        <property name="connectionFactory" ref="connectionFactory"/>
+        <property name="destination" ref="queueSolrDeleteDestination" />
+        <!--配置自己实现的监听器-->
+
+        <property name="messageListener" ref="itemDeleteListener"/>
+    </bean>
+
+
+
+</beans>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+
+    <!-- 配置 favicon.ico不进行安全拦截-->
+    <http pattern="/favicon.ico" security="none"/>
+    <!--配置放行资源-->
+    <http pattern="/shoplogin.html" security="none"/>
+    <http pattern="/js/**" security="none"/>
+    <http pattern="/plugins/**" security="none"/>
+    <http pattern="/img/**" security="none"/>
+    <http pattern="/css/**" security="none"/>
+    <http pattern="/seller/add.do" security="none"/>
+    <http pattern="/register.html" security="none"/>
+
+    <!--配置拦截规则-->
+    <http use-expressions="false">
+        <intercept-url pattern="/**" access="ROLE_SELLER"/>
+
+        <form-login authentication-failure-url="/shoplogin.html" always-use-default-target="true"
+                    default-target-url="/admin/index.html" login-page="/shoplogin.html"/>
+
+        <csrf disabled="true"/>
+
+        <headers>
+            <frame-options policy="SAMEORIGIN"/>
+        </headers>
+
+        <!--配置退出
+
+        logout-url="": 退出路径
+            自动生成：
+                 /logout
+
+             自定义退出路径：
+                 /adminLogout
+
+        logout-success-url="": 退出成功的页面
+
+          默认： 退出后自动跳转到登录页面
+
+          自定义退出页面
+
+
+        -->
+        <logout />
+
+    </http>
+
+
+    <!--配置加密规则算法-->
+        <beans:bean id="bcryptEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"></beans:bean>
+
+    <!--认证管理器-->
+    <authentication-manager>
+        <authentication-provider user-service-ref="userDetailsServiceImpl">
+
+            <password-encoder ref="bcryptEncoder"></password-encoder>
+        </authentication-provider>
+    </authentication-manager>
+
+    <!--认证类-->
+    <beans:bean id="userDetailsServiceImpl" class="com.offcn.service.UserDetailsServiceImpl">
+
+        <beans:property name="sellerService" ref="sellerService"/>
+    </beans:bean>
+
+
+    <dubbo:application name="dongyimai-shop-web"/>
+    <dubbo:registry address="zookeeper://192.168.188.128:2181"/>
+    <dubbo:reference id="sellerService"  interface="com.offcn.sellergoods.service.SellerService"/>
+
+
+
+</beans:beans>
